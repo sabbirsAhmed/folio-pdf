@@ -1,0 +1,10 @@
+node_modules/
+dist/
+target/
+vendor/pdfium-*/
+vendor/*.tgz
+vendor/pdfium-bundle/*
+!vendor/pdfium-bundle/.gitkeep
+public/ocr/
+src-tauri/gen/
+*.folio-tmp

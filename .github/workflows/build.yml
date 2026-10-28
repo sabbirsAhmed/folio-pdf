@@ -1,0 +1,66 @@
+name: Build installers
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  test-engine:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node scripts/fetch-pdfium.mjs --target linux-x64
+      - run: cargo test -p folio-engine --release
+        env:
+          FOLIO_PDFIUM_DIR: ${{ github.workspace }}/vendor/pdfium-bundle
+
+  build:
+    needs: test-engine
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            pdfium: win-x64
+            args: ""
+          - os: macos-latest
+            pdfium: mac-univ
+            args: "--target universal-apple-darwin"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.os == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - uses: swatinem/rust-cache@v2
+      - run: npm ci
+      - run: node scripts/fetch-pdfium.mjs --target ${{ matrix.pdfium }}
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # macOS signing / notarisation (optional; set these repository secrets)
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        with:
+          args: ${{ matrix.args }}
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          releaseName: Folio PDF ${{ github.ref_name }}
+          releaseDraft: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: folio-${{ matrix.pdfium }}
+          path: |
+            target/release/bundle/**/*.msi
+            target/release/bundle/**/*.exe
+            target/universal-apple-darwin/release/bundle/**/*.dmg
+          if-no-files-found: ignore

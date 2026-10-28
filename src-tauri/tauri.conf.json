@@ -1,0 +1,58 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Folio PDF",
+  "version": "0.1.0",
+  "identifier": "ee.stellarsolutions.foliopdf",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Folio PDF",
+        "width": 1440,
+        "height": 920,
+        "minWidth": 960,
+        "minHeight": 620,
+        "center": true,
+        "dragDropEnabled": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self' ipc: http://ipc.localhost; img-src 'self' blob: data: asset: http://asset.localhost; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; connect-src 'self' ipc: http://ipc.localhost blob: data:; font-src 'self' data:"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "msi", "app", "dmg"],
+    "publisher": "Stellar Solutions",
+    "copyright": "© 2026 Stellar Solutions",
+    "category": "Productivity",
+    "shortDescription": "View, edit, sign and organise PDFs",
+    "longDescription": "Folio PDF is a cross-platform PDF editor: annotate, fill and create forms, edit text and images, organise pages, redact, protect, compress, OCR and export to Word, Excel and images.",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
+    "resources": {
+      "../vendor/pdfium-bundle/": "pdfium/"
+    },
+    "fileAssociations": [
+      {
+        "ext": ["pdf"],
+        "mimeType": "application/pdf",
+        "name": "PDF Document",
+        "description": "PDF Document",
+        "role": "Editor"
+      }
+    ],
+    "windows": {
+      "nsis": { "installMode": "currentUser", "displayLanguageSelector": false },
+      "webviewInstallMode": { "type": "downloadBootstrapper" }
+    },
+    "macOS": {
+      "minimumSystemVersion": "10.15"
+    }
+  }
+}
